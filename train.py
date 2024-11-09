@@ -8,7 +8,7 @@ import torch.optim as optim
 
 
 from model import Generator, Discriminator
-from utils import D_train, G_train, save_models
+from utils import D_train, G_train, save_models, D_uot, G_uot
 
 
 
@@ -25,7 +25,7 @@ if __name__ == '__main__':
     args = parser.parse_args()
 
 
-    os.makedirs('chekpoints', exist_ok=True)
+    os.makedirs('checkpoints', exist_ok=True)
     os.makedirs('data', exist_ok=True)
 
     # Data Pipeline
@@ -62,8 +62,8 @@ if __name__ == '__main__':
     criterion = nn.BCELoss() 
 
     # define optimizers
-    G_optimizer = optim.Adam(G.parameters(), lr = args.lr)
-    D_optimizer = optim.Adam(D.parameters(), lr = args.lr)
+    G_optimizer = optim.Adam(G.parameters(), lr = 1.6e-4)
+    D_optimizer = optim.Adam(D.parameters(), lr = 1e-4)
 
     print('Start Training :')
     
@@ -71,8 +71,8 @@ if __name__ == '__main__':
     for epoch in trange(1, n_epoch+1, leave=True):           
         for batch_idx, (x, _) in enumerate(train_loader):
             x = x.view(-1, mnist_dim)
-            D_train(x, G, D, D_optimizer, criterion)
-            G_train(x, G, D, G_optimizer, criterion)
+            D_uot(x, G, D, D_optimizer, criterion)
+            G_uot(x, G, D, G_optimizer, criterion)
 
         if epoch % 10 == 0:
             save_models(G, D, 'checkpoints')
