@@ -3,8 +3,33 @@ import os
 import torch.nn.functional as F
 
 
+class EMA():
+    def __init__(self, beta):
+        super().__init__()
+        self.beta = beta
+
+#     def update_model_average(self, ma_model, current_model):
+#         for current_params, ma_params in zip(current_model.parameters(), ma_model.parameters()):
+#             old_weight, up_weight = ma_params.data, current_params.data
+#             ma_params.data = self.update_average(old_weight, up_weight)
+
+    def update_model_average(self, model_tgt, model_src):
+        with torch.no_grad():
+            param_dict_src = dict(model_src.named_parameters())
+            for p_name, p_tgt in model_tgt.named_parameters():
+                p_src = param_dict_src[p_name]
+                assert(p_src is not p_tgt)
+                old_weight, up_weight = p_tgt.data, p_src.data
+                p_tgt.data = self.update_average(old_weight, up_weight)
+
+    def update_average(self, old, new):
+        if old is None:
+            return new
+        return old * self.beta + (1 - self.beta) * new
+
+
 def phi(x):
-    return F.softplus(x)
+    return torch.exp(x) #F.softplus(x)
 
 def D_train(x, G, D, D_optimizer, criterion):
     #=======================Train the discriminator=======================#
@@ -32,7 +57,7 @@ def D_train(x, G, D, D_optimizer, criterion):
     D_loss.backward()
     D_optimizer.step()
         
-    return  D_loss.data.item()
+    return D_loss.data.item()
 
 
 def D_uot(x, G, D, D_optimizer, criterion):
